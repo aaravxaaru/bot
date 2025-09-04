@@ -1,3 +1,12 @@
+from flask import Flask, request, jsonify
+import json
+from fbchat import Client
+from fbchat.models import ThreadType
+
+app = Flask(__name__)
+
+# ------------------- HTML FRONTEND -------------------
+html_page = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +21,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .container {
       background: #2c2c2c;
@@ -19,6 +29,7 @@
       border-radius: 10px;
       width: 400px;
       text-align: center;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
     textarea, input {
       width: 100%;
@@ -71,3 +82,38 @@
   </script>
 </body>
 </html>
+"""
+
+# ------------------- ROUTES -------------------
+@app.route("/")
+def home():
+    return html_page
+
+@app.route("/change_name", methods=["POST"])
+def change_name():
+    try:
+        # Get form data
+        appstate_raw = request.form.get("appstate")
+        group_id = request.form.get("group_id")
+        new_name = request.form.get("new_name")
+
+        # Load appstate JSON
+        appstate = json.loads(appstate_raw)
+
+        # Login with appstate
+        client = Client("null", "null", session_cookies=appstate)
+
+        # Change group name
+        client.changeThreadTitle(new_name, thread_id=group_id, thread_type=ThreadType.GROUP)
+
+        client.logout()
+        return jsonify({"status": "success", "message": "✅ Group name changed successfully!"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"❌ Failed: {str(e)}"})
+
+# ------------------- RUN APP -------------------
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
