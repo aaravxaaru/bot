@@ -1,39 +1,3 @@
-from flask import Flask, render_template, request, jsonify
-import json
-from fbchat import Client
-from fbchat.models import ThreadType
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-@app.route("/change_name", methods=["POST"])
-def change_name():
-    try:
-        # Get form data
-        appstate_raw = request.form.get("appstate")
-        group_id = request.form.get("group_id")
-        new_name = request.form.get("new_name")
-
-        # Load appstate JSON
-        appstate = json.loads(appstate_raw)
-
-        # Login with appstate
-        client = Client("null", "null", session_cookies=appstate)
-
-        # Change group name
-        client.changeThreadTitle(new_name, thread_id=group_id, thread_type=ThreadType.GROUP)
-
-        client.logout()
-        return jsonify({"status": "success", "message": "✅ Group name changed successfully!"})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"❌ Failed: {str(e)}"})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
 <!DOCTYPE html>
 <html lang="en">
 <head>
